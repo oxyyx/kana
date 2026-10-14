@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#f6f5f1" id="theme-color">
+  <meta name="description" content="Practise hiragana and katakana with quick flashcards.">
+  <title>Kana</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='14' fill='%23d23f2a'/%3E%3Ctext x='50' y='70' font-size='58' text-anchor='middle' fill='white' font-family='serif'%3E%E3%81%8B%3C/text%3E%3C/svg%3E">
+  <script>try { if (localStorage.getItem("kana:theme") === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <section id="setup" class="screen setup">
+    <header class="brand">
+      <span class="hanko" lang="ja" aria-hidden="true"><span>か</span><span>な</span></span>
+      <div>
+        <h1>Kana</h1>
+        <p>Flashcards for hiragana &amp; katakana</p>
+      </div>
+      <button type="button" id="theme" class="theme-toggle" aria-label="Toggle dark mode">
+        <svg class="moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+
+    <form id="options" class="panel">
+      <fieldset>
+        <legend><span lang="ja">文字</span>Script</legend>
+        <div class="segmented">
+          <label><input type="radio" name="script" value="hira" checked><span lang="ja">ひらがな</span></label>
+          <label><input type="radio" name="script" value="kata"><span lang="ja">カタカナ</span></label>
+          <label><input type="radio" name="script" value="both"><span>Both</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span lang="ja">仮名</span>Kana</legend>
+        <div class="chips">
+          <label class="chip"><input type="checkbox" name="group" value="basic" checked><span>Basic <small data-count="basic"></small></span></label>
+          <label class="chip"><input type="checkbox" name="group" value="dakuten"><span>Dakuten <small data-count="dakuten"></small></span></label>
+          <label class="chip"><input type="checkbox" name="group" value="combo"><span>Combinations <small data-count="combo"></small></span></label>
+        </div>
+        <button type="button" id="edit-chars" class="edit-chars">
+          <span>Choose characters</span>
+          <span id="marks-summary" class="summary"></span>
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </fieldset>
+
+      <fieldset>
+        <legend><span lang="ja">書体</span>Typefaces</legend>
+        <div class="chips">
+          <label class="chip"><input type="checkbox" name="font" value="kyokasho" checked><span><b lang="ja" data-font="kyokasho">あ</b>Textbook</span></label>
+          <label class="chip"><input type="checkbox" name="font" value="system"><span><b lang="ja" data-font="system">あ</b>System</span></label>
+          <label class="chip"><input type="checkbox" name="font" value="gothic"><span><b lang="ja" data-font="gothic">あ</b>Gothic</span></label>
+          <label class="chip"><input type="checkbox" name="font" value="mincho"><span><b lang="ja" data-font="mincho">あ</b>Mincho</span></label>
+          <label class="chip"><input type="checkbox" name="font" value="maru"><span><b lang="ja" data-font="maru">あ</b>Rounded</span></label>
+          <label class="chip"><input type="checkbox" name="font" value="kalligrafie"><span><b lang="ja" data-font="kalligrafie">あ</b>Calligraphy</span></label>
+          <label class="chip"><input type="checkbox" name="font" value="handschrift"><span><b lang="ja" data-font="handschrift">あ</b>Handwriting</span></label>
+          <label class="chip"><input type="checkbox" name="font" value="pixel"><span><b lang="ja" data-font="pixel">あ</b>Pixel</span></label>
+        </div>
+      </fieldset>
+
+      <button type="submit" id="start" class="start">Start <span class="count">· <span id="total">0</span> cards</span></button>
+    </form>
+  </section>
+
+  <dialog id="chars" class="sheet" aria-labelledby="chars-title">
+    <form method="dialog" class="sheet-head">
+      <h2 id="chars-title" tabindex="-1" autofocus>Characters</h2>
+      <button class="done">Done</button>
+    </form>
+    <div class="sheet-body">
+      <div class="sheet-tools">
+        <span>Tap: on → <b>↑ focus</b> → off</span>
+        <span class="tool-buttons">
+          <button type="button" class="tool" data-all="on">All on</button>
+          <button type="button" class="tool" data-all="off">All off</button>
+        </span>
+      </div>
+      <div id="char-tables" class="char-tables"></div>
+    </div>
+  </dialog>
+
+  <section id="game" class="screen game" hidden>
+    <header class="bar">
+      <button type="button" id="stop" class="stop" aria-label="Stop">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="stats">
+        <span id="streak" class="streak" hidden></span>
+        <span id="score">0 / 0</span>
+      </div>
+    </header>
+
+    <div class="stage">
+      <div id="card" class="card" data-state="idle">
+        <div id="font-label" class="font-label"></div>
+        <div id="kana" class="kana" lang="ja"></div>
+        <div id="answer" class="answer" aria-live="polite"></div>
+        <div class="timer"><i id="timer"></i></div>
+      </div>
+
+      <form id="answer-form">
+        <input id="input" class="input" type="text" placeholder="romaji" aria-label="Romaji"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               enterkeyhint="go" lang="en">
+      </form>
+
+      <p class="hint">Type the romaji · <kbd>Enter</kbd> to skip</p>
+    </div>
+  </section>
+</body>
+</html>

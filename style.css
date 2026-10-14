@@ -1,0 +1,620 @@
+/* Sumi & washi: inkt op papier, één vermiljoen accent (hanko), dunne lijnen. */
+:root {
+  color-scheme: light;
+  --bg: #f6f5f1;
+  --surface: #fcfbf8;
+  --ink: #1b1b1a;
+  --on-ink: #f6f5f1;
+  --muted: #8a867d;
+  --rule: #dfdbd1;
+  --rule-strong: #c4bfb3;
+  --accent: #d23f2a;
+  --on-accent: #fff;
+  --ok: #4f7a3c;
+  --ok-bg: #eef3e8;
+  --bad: #c2661f;
+  --bad-bg: #f8ece0;
+  --radius: 6px;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-jp: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", "Noto Sans CJK JP", Meiryo, sans-serif;
+}
+
+/* Donker alleen via de knop (data-theme op <html>); standaard is licht. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #131312;
+  --surface: #1a1a18;
+  --ink: #ebe8e0;
+  --on-ink: #131312;
+  --muted: #8d897f;
+  --rule: #2c2b28;
+  --rule-strong: #45433e;
+  --accent: #e2553d;
+  --ok: #96c27b;
+  --ok-bg: #1d2619;
+  --bad: #e49b57;
+  --bad-bg: #2c2118;
+}
+
+/* Fonts: subsets met alleen de gebruikte kana (zie fonts/LICENSE.md). */
+@font-face { font-family: "Kana Gothic"; src: url(fonts/gothic.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Kyokasho"; src: url(fonts/kyokasho.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Mincho"; src: url(fonts/mincho.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Maru"; src: url(fonts/maru.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Kalligrafie"; src: url(fonts/kalligrafie.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Handschrift"; src: url(fonts/handschrift.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Pixel"; src: url(fonts/pixel.woff2) format("woff2"); font-display: swap; }
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.4 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { -webkit-tap-highlight-color: transparent; }
+
+[lang="ja"] { font-family: var(--font-jp); }
+[data-font="gothic"] { font-family: "Kana Gothic", var(--font-jp); }
+[data-font="kyokasho"] { font-family: "Kana Kyokasho", var(--font-jp); }
+[data-font="mincho"] { font-family: "Kana Mincho", var(--font-jp); }
+[data-font="maru"] { font-family: "Kana Maru", var(--font-jp); }
+[data-font="kalligrafie"] { font-family: "Kana Kalligrafie", var(--font-jp); }
+[data-font="handschrift"] { font-family: "Kana Handschrift", var(--font-jp); }
+[data-font="pixel"] { font-family: "Kana Pixel", var(--font-jp); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 440px);
+  min-height: 100dvh;
+  margin-inline: auto;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+}
+
+/* ---------- Opties ---------- */
+
+.setup { justify-content: center; gap: 32px; }
+
+.brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.hanko {
+  display: flex;
+  flex-direction: column; /* verticaal geschreven, zoals op een stempel */
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: "Kana Mincho", var(--font-jp);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.brand h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 1.1;
+}
+.brand p { margin: 3px 0 0; font-size: .88rem; color: var(--muted); }
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--rule-strong); }
+.theme-toggle .sun { display: none; }
+[data-theme="dark"] .theme-toggle .sun { display: block; }
+[data-theme="dark"] .theme-toggle .moon { display: none; }
+
+.panel { display: grid; gap: 0; }
+
+fieldset { min-width: 0; margin: 0; padding: 18px 0; border: 0; border-top: 1px solid var(--rule); }
+legend {
+  float: left; /* zodat de fieldset-rand gewoon bovenaan loopt */
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 0;
+  text-align: center;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+legend + * { clear: both; }
+legend [lang="ja"] {
+  margin-right: 8px;
+  font-size: .95rem;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.segmented label, .chip { position: relative; }
+.segmented input, .chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented label + label span { border-left: 1px solid var(--rule-strong); }
+.segmented span {
+  display: block;
+  padding: 10px 4px;
+  text-align: center;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color .15s, color .15s;
+}
+.segmented input:checked + span { background: var(--ink); color: var(--on-ink); }
+
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.chip span {
+  display: block;
+  padding: 7px 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  font-size: .92rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color .15s, border-color .15s, color .15s;
+}
+.chip b {
+  margin-right: 6px;
+  font-size: 1.1em;
+  font-weight: normal;
+  line-height: 1;
+  color: var(--ink);
+  transition: color .15s;
+}
+.chip small { margin-left: 3px; font-size: .8em; opacity: .65; font-variant-numeric: tabular-nums; }
+.chip input:checked + span { border-color: var(--ink); background: var(--ink); color: var(--on-ink); }
+.chip input:checked + span b { color: var(--on-ink); }
+
+.segmented input:focus-visible + span,
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.edit-chars {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font: 500 .92rem/1.2 var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+.edit-chars .summary { margin-left: auto; color: var(--muted); font-size: .9em; }
+.edit-chars svg { flex: none; color: var(--muted); }
+
+.start {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 600 1.05rem/1 var(--font-ui);
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: transform .1s, opacity .15s;
+}
+.start::after { content: "→"; font-weight: 400; }
+.start .count { margin-left: 8px; margin-right: auto; font-weight: 400; opacity: .6; font-variant-numeric: tabular-nums; }
+.start:active { transform: scale(.985); }
+.start:disabled { opacity: .3; cursor: default; transform: none; }
+
+/* ---------- Tekentabel ---------- */
+
+.sheet {
+  width: min(100% - 24px, 440px);
+  max-height: min(100dvh - 24px, 780px);
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  overscroll-behavior: contain;
+}
+.sheet::backdrop { background: rgb(10 10 10 / .4); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+
+.sheet-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule);
+}
+.sheet-head h2 { margin: 0; font-size: 1.05rem; font-weight: 600; outline: none; }
+.done {
+  appearance: none;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 600 .88rem/1 var(--font-ui);
+  cursor: pointer;
+}
+
+.sheet-body { display: grid; gap: 18px; padding: 14px 16px 20px; }
+
+.sheet-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: .8rem;
+  color: var(--muted);
+}
+.sheet-tools b { color: var(--accent); font-weight: 600; }
+.tool-buttons { display: flex; gap: 6px; }
+.tool {
+  appearance: none;
+  padding: 6px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font: 500 .8rem/1.2 var(--font-ui);
+  cursor: pointer;
+}
+
+.char-tables { display: grid; gap: 18px; }
+.char-tables h3 {
+  margin: 0 0 8px;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.char-tables .empty { margin: 0; color: var(--muted); font-size: .9rem; }
+
+.char-grid {
+  display: grid;
+  grid-template-columns: 2.1rem repeat(var(--cols, 5), minmax(0, 1fr));
+  gap: 4px;
+}
+
+.row-btn {
+  appearance: none;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 .72rem/1 var(--font-ui);
+  letter-spacing: .06em;
+  cursor: pointer;
+  transition: color .12s, opacity .12s;
+}
+.row-btn[data-mark="focus"] { color: var(--accent); }
+.row-btn[data-mark="off"] { opacity: .4; text-decoration: line-through; }
+.row-btn[data-mark="mixed"] { color: var(--ink); }
+
+.cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  min-width: 0;
+  padding: 7px 2px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color .12s, border-color .12s, opacity .12s;
+}
+.cell span { font-size: 1.3rem; line-height: 1.15; }
+.cell small { font-size: .64rem; letter-spacing: .03em; color: var(--muted); }
+.cell[data-mark="focus"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+.cell[data-mark="focus"]::after {
+  content: "↑";
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.cell[data-mark="off"] { opacity: .3; border-style: dashed; background: transparent; }
+
+/* ---------- Spel ---------- */
+
+/* Het spel vult precies het zichtbare deel van het scherm. --vvh/--vvt komen uit app.js
+   (visualViewport), zodat het op iOS boven het toetsenbord blijft. */
+.game {
+  position: fixed;
+  top: var(--vvt, 0px);
+  inset-inline: 0;
+  height: var(--vvh, 100dvh);
+  min-height: 0;
+  gap: 12px;
+  padding-bottom: 12px;
+  overflow: hidden;
+}
+
+.bar { display: flex; align-items: center; justify-content: space-between; }
+
+.stop {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.stop svg { width: 14px; height: 14px; }
+
+.stats {
+  display: flex;
+  gap: 14px;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.streak { color: var(--accent); }
+
+/* Invoer houdt zijn maat; de kaart krijgt de rest van de hoogte. */
+.stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  min-height: 0;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: 360px;
+  padding: 14px 0 8px;
+  container-type: size;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  transition: background-color .15s, border-color .15s;
+}
+.card[data-state="ok"] { background: var(--ok-bg); border-color: var(--ok); animation: pop .26s ease-out; }
+.card[data-state="bad"] { background: var(--bad-bg); border-color: var(--bad); animation: shake .3s ease-in-out; }
+
+/* Oefenvakje met gestippeld kruis, zoals in een Japans schrijfschrift. */
+.kana {
+  --sq: min(calc(100cqh - 3.6rem), 66cqw);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: var(--sq);
+  height: var(--sq);
+  border: 1px solid var(--rule-strong);
+  font-size: calc(var(--sq) * .7);
+  font-weight: 500;
+  line-height: 1;
+  transition: color .15s, border-color .15s;
+}
+.kana[data-len="2"] {
+  --sq: min(calc(100cqh - 3.6rem), 54cqw);
+  width: calc(var(--sq) * 1.55);
+  font-size: calc(var(--sq) * .62);
+}
+.kana::before, .kana::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border: 0 dashed var(--rule-strong);
+}
+.kana::before { inset-inline: 0; top: 50%; border-top-width: 1px; }
+.kana::after { inset-block: 0; left: 50%; border-left-width: 1px; }
+.card[data-state="ok"] .kana { color: var(--ok); border-color: var(--ok); }
+.card[data-state="bad"] .kana { color: var(--bad); border-color: var(--bad); }
+
+.answer {
+  min-height: 1.4em;
+  line-height: 1.4;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  color: var(--bad);
+}
+
+.timer {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: transparent;
+}
+.timer i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  will-change: transform;
+}
+.card[data-state="ok"] .timer i { background: var(--ok); }
+.card[data-state="bad"] .timer i { background: var(--bad); }
+
+.font-label {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: .64rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#answer-form { margin: 0; }
+
+.input {
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--rule-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 400 1.75rem/1.2 var(--font-ui);
+  letter-spacing: .08em;
+  text-align: center;
+  caret-color: var(--accent);
+  outline: none;
+  transition: border-color .15s;
+}
+.input:focus { border-color: var(--ink); }
+.input::placeholder { color: var(--muted); opacity: .45; letter-spacing: .12em; }
+
+.hint { margin: 0; text-align: center; font-size: .78rem; color: var(--muted); }
+@media (hover: none) {
+  .hint { display: none; } /* Enter-tip is voor toetsenborden; op mobiel scheelt het ruimte */
+}
+kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  font: inherit;
+  font-size: .9em;
+}
+
+@keyframes pop {
+  50% { transform: scale(1.02); }
+}
+
+@keyframes shake {
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none !important; }
+}
+
+/* ---------- Compact op telefoons ---------- */
+
+@media (max-width: 500px) {
+  .screen {
+    padding:
+      max(12px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+  }
+
+  /* Opties */
+  .setup { gap: 18px; }
+  .brand { gap: 8px; }
+  .hanko { width: 44px; height: 44px; font-size: 1rem; }
+  .brand h1 { font-size: 1.35rem; }
+  .brand p { font-size: .8rem; }
+  .theme-toggle { width: 34px; height: 34px; }
+  fieldset { padding: 12px 0; }
+  legend { margin-bottom: 8px; font-size: .66rem; }
+  legend [lang="ja"] { font-size: .88rem; }
+  .segmented span { padding: 8px 4px; font-size: .88rem; }
+  .chips { gap: 5px; }
+  .chip span { padding: 5px 9px; font-size: .84rem; }
+  .chip b { margin-right: 4px; }
+  .edit-chars { margin-top: 8px; padding: 8px 12px; font-size: .86rem; }
+  .start { padding: 14px 16px; font-size: 1rem; }
+  .sheet-head { padding: 10px 14px; }
+  .sheet-body { padding: 12px 12px 16px; gap: 14px; }
+  .char-grid { grid-template-columns: 1.8rem repeat(var(--cols, 5), minmax(0, 1fr)); }
+  .cell span { font-size: 1.15rem; }
+
+  /* Spel */
+  .game { gap: 8px; padding-bottom: 8px; }
+  .stop { width: 32px; height: 32px; }
+  .stats { gap: 10px; font-size: .85rem; }
+  .stage { gap: 10px; }
+  .card { min-height: 110px; max-height: 260px; padding: 10px 0 6px; }
+  .answer { font-size: 1.1rem; }
+  .font-label { top: 9px; left: 12px; font-size: .6rem; }
+  .input { padding: 4px; font-size: 1.35rem; }
+}
