@@ -43,3 +43,7 @@ kana.example.com {
 ## Made with AI
 
 This app was built entirely with AI ([Claude Code](https://claude.com/claude-code)): the code, styling and font selection, from a short description and iterative feedback.
+
+## License
+
+The app's code is licensed under the [MIT License](LICENSE). The fonts in `fonts/` are licensed separately under the SIL Open Font License 1.1; see [fonts/LICENSE.md](fonts/LICENSE.md).

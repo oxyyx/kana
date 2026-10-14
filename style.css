@@ -1,4 +1,4 @@
-/* Sumi & washi: inkt op papier, één vermiljoen accent (hanko), dunne lijnen. */
+/* Sumi & washi: ink on paper, a single vermilion accent (hanko), hairlines. */
 :root {
   color-scheme: light;
   --bg: #f6f5f1;
@@ -19,7 +19,7 @@
   --font-jp: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", "Noto Sans CJK JP", Meiryo, sans-serif;
 }
 
-/* Donker alleen via de knop (data-theme op <html>); standaard is licht. */
+/* Dark only via the toggle (data-theme on <html>); light is the default. */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #131312;
@@ -36,13 +36,13 @@
   --bad-bg: #2c2118;
 }
 
-/* Fonts: subsets met alleen de gebruikte kana (zie fonts/LICENSE.md). */
+/* Fonts: subsets with only the kana in use (see fonts/LICENSE.md). */
 @font-face { font-family: "Kana Gothic"; src: url(fonts/gothic.woff2) format("woff2"); font-display: swap; }
-@font-face { font-family: "Kana Kyokasho"; src: url(fonts/kyokasho.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Textbook"; src: url(fonts/textbook.woff2) format("woff2"); font-display: swap; }
 @font-face { font-family: "Kana Mincho"; src: url(fonts/mincho.woff2) format("woff2"); font-display: swap; }
-@font-face { font-family: "Kana Maru"; src: url(fonts/maru.woff2) format("woff2"); font-display: swap; }
-@font-face { font-family: "Kana Kalligrafie"; src: url(fonts/kalligrafie.woff2) format("woff2"); font-display: swap; }
-@font-face { font-family: "Kana Handschrift"; src: url(fonts/handschrift.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Rounded"; src: url(fonts/rounded.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Calligraphy"; src: url(fonts/calligraphy.woff2) format("woff2"); font-display: swap; }
+@font-face { font-family: "Kana Handwriting"; src: url(fonts/handwriting.woff2) format("woff2"); font-display: swap; }
 @font-face { font-family: "Kana Pixel"; src: url(fonts/pixel.woff2) format("woff2"); font-display: swap; }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -64,11 +64,11 @@ button { -webkit-tap-highlight-color: transparent; }
 
 [lang="ja"] { font-family: var(--font-jp); }
 [data-font="gothic"] { font-family: "Kana Gothic", var(--font-jp); }
-[data-font="kyokasho"] { font-family: "Kana Kyokasho", var(--font-jp); }
+[data-font="textbook"] { font-family: "Kana Textbook", var(--font-jp); }
 [data-font="mincho"] { font-family: "Kana Mincho", var(--font-jp); }
-[data-font="maru"] { font-family: "Kana Maru", var(--font-jp); }
-[data-font="kalligrafie"] { font-family: "Kana Kalligrafie", var(--font-jp); }
-[data-font="handschrift"] { font-family: "Kana Handschrift", var(--font-jp); }
+[data-font="rounded"] { font-family: "Kana Rounded", var(--font-jp); }
+[data-font="calligraphy"] { font-family: "Kana Calligraphy", var(--font-jp); }
+[data-font="handwriting"] { font-family: "Kana Handwriting", var(--font-jp); }
 [data-font="pixel"] { font-family: "Kana Pixel", var(--font-jp); }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -86,7 +86,7 @@ button { -webkit-tap-highlight-color: transparent; }
     max(20px, env(safe-area-inset-left));
 }
 
-/* ---------- Opties ---------- */
+/* ---------- Options ---------- */
 
 .setup { justify-content: center; gap: 32px; }
 
@@ -100,7 +100,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .hanko {
   display: flex;
-  flex-direction: column; /* verticaal geschreven, zoals op een stempel */
+  flex-direction: column; /* written vertically, like on a seal */
   align-items: center;
   justify-content: center;
   gap: 1px;
@@ -149,7 +149,7 @@ button { -webkit-tap-highlight-color: transparent; }
 
 fieldset { min-width: 0; margin: 0; padding: 18px 0; border: 0; border-top: 1px solid var(--rule); }
 legend {
-  float: left; /* zodat de fieldset-rand gewoon bovenaan loopt */
+  float: left; /* so the fieldset border simply runs along the top */
   width: 100%;
   margin-bottom: 12px;
   padding: 0;
@@ -262,7 +262,7 @@ legend [lang="ja"] {
 .start:active { transform: scale(.985); }
 .start:disabled { opacity: .3; cursor: default; transform: none; }
 
-/* ---------- Tekentabel ---------- */
+/* ---------- Character table ---------- */
 
 .sheet {
   width: min(100% - 24px, 440px);
@@ -389,10 +389,10 @@ legend [lang="ja"] {
 }
 .cell[data-mark="off"] { opacity: .3; border-style: dashed; background: transparent; }
 
-/* ---------- Spel ---------- */
+/* ---------- Game ---------- */
 
-/* Het spel vult precies het zichtbare deel van het scherm. --vvh/--vvt komen uit app.js
-   (visualViewport), zodat het op iOS boven het toetsenbord blijft. */
+/* The game fills exactly the visible part of the screen. --vvh/--vvt come from app.js
+   (visualViewport), so on iOS it stays above the keyboard. */
 .game {
   position: fixed;
   top: var(--vvt, 0px);
@@ -431,7 +431,7 @@ legend [lang="ja"] {
 }
 .streak { color: var(--accent); }
 
-/* Invoer houdt zijn maat; de kaart krijgt de rest van de hoogte. */
+/* The input keeps its size; the card gets the remaining height. */
 .stage {
   display: flex;
   flex: 1;
@@ -460,7 +460,7 @@ legend [lang="ja"] {
 .card[data-state="ok"] { background: var(--ok-bg); border-color: var(--ok); animation: pop .26s ease-out; }
 .card[data-state="bad"] { background: var(--bad-bg); border-color: var(--bad); animation: shake .3s ease-in-out; }
 
-/* Oefenvakje met gestippeld kruis, zoals in een Japans schrijfschrift. */
+/* Practice square with a dashed cross, like in a Japanese writing exercise book. */
 .kana {
   --sq: min(calc(100cqh - 3.6rem), 66cqw);
   position: relative;
@@ -551,7 +551,7 @@ legend [lang="ja"] {
 
 .hint { margin: 0; text-align: center; font-size: .78rem; color: var(--muted); }
 @media (hover: none) {
-  .hint { display: none; } /* Enter-tip is voor toetsenborden; op mobiel scheelt het ruimte */
+  .hint { display: none; } /* the Enter tip is for physical keyboards; on mobile it saves space */
 }
 kbd {
   padding: 1px 5px;
@@ -576,7 +576,7 @@ kbd {
   .card { animation: none !important; }
 }
 
-/* ---------- Compact op telefoons ---------- */
+/* ---------- Compact on phones ---------- */
 
 @media (max-width: 500px) {
   .screen {
@@ -587,7 +587,7 @@ kbd {
       max(16px, env(safe-area-inset-left));
   }
 
-  /* Opties */
+  /* Options */
   .setup { gap: 18px; }
   .brand { gap: 8px; }
   .hanko { width: 44px; height: 44px; font-size: 1rem; }
@@ -608,7 +608,7 @@ kbd {
   .char-grid { grid-template-columns: 1.8rem repeat(var(--cols, 5), minmax(0, 1fr)); }
   .cell span { font-size: 1.15rem; }
 
-  /* Spel */
+  /* Game */
   .game { gap: 8px; padding-bottom: 8px; }
   .stop { width: 32px; height: 32px; }
   .stats { gap: 10px; font-size: .85rem; }

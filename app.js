@@ -4,25 +4,25 @@
   const TIME_LIMIT_MS = 5000;
   const FEEDBACK_OK_MS = 600;
   const FEEDBACK_BAD_MS = 1200;
-  const FOCUS_WEIGHT = 3; // "vaker"-tekens zitten zo vaak in de stapel
+  const FOCUS_WEIGHT = 3; // focus characters appear this many times in the deck
   const STORE_KEY = "kana:options:v2";
 
-  // Hiragana + romaji (eerste = getoond antwoord, rest = ook goed). Katakana wordt afgeleid.
+  // Hiragana + romaji (first = shown answer, the rest are also accepted). Katakana is derived.
   const GROUPS = {
     basic: "あ a,い i,う u,え e,お o,か ka,き ki,く ku,け ke,こ ko,さ sa,し shi si,す su,せ se,そ so,た ta,ち chi ti,つ tsu tu,て te,と to,な na,に ni,ぬ nu,ね ne,の no,は ha,ひ hi,ふ fu hu,へ he,ほ ho,ま ma,み mi,む mu,め me,も mo,や ya,ゆ yu,よ yo,ら ra,り ri,る ru,れ re,ろ ro,わ wa,を wo o,ん n nn",
     dakuten: "が ga,ぎ gi,ぐ gu,げ ge,ご go,ざ za,じ ji zi,ず zu,ぜ ze,ぞ zo,だ da,ぢ ji di zi,づ zu du,で de,ど do,ば ba,び bi,ぶ bu,べ be,ぼ bo,ぱ pa,ぴ pi,ぷ pu,ぺ pe,ぽ po",
     combo: "きゃ kya,きゅ kyu,きょ kyo,しゃ sha sya,しゅ shu syu,しょ sho syo,ちゃ cha tya cya,ちゅ chu tyu cyu,ちょ cho tyo cyo,にゃ nya,にゅ nyu,にょ nyo,ひゃ hya,ひゅ hyu,ひょ hyo,みゃ mya,みゅ myu,みょ myo,りゃ rya,りゅ ryu,りょ ryo,ぎゃ gya,ぎゅ gyu,ぎょ gyo,じゃ ja zya jya,じゅ ju zyu jyu,じょ jo zyo jyo,びゃ bya,びゅ byu,びょ byo,ぴゃ pya,ぴゅ pyu,ぴょ pyo",
   };
 
-  // Lettertypes: subsets met alleen kana in fonts/, zie style.css. Per kaart wordt er één gekozen.
+  // Typefaces: kana-only subsets in fonts/, see style.css. One is picked per card.
   const FONTS = {
-    kyokasho: { label: "Textbook", family: "Kana Kyokasho" },
+    textbook: { label: "Textbook", family: "Kana Textbook" },
     system: { label: "System", family: "" },
     gothic: { label: "Gothic", family: "Kana Gothic" },
     mincho: { label: "Mincho", family: "Kana Mincho" },
-    maru: { label: "Rounded", family: "Kana Maru" },
-    kalligrafie: { label: "Calligraphy", family: "Kana Kalligrafie" },
-    handschrift: { label: "Handwriting", family: "Kana Handschrift" },
+    rounded: { label: "Rounded", family: "Kana Rounded" },
+    calligraphy: { label: "Calligraphy", family: "Kana Calligraphy" },
+    handwriting: { label: "Handwriting", family: "Kana Handwriting" },
     pixel: { label: "Pixel", family: "Kana Pixel" },
   };
 
@@ -36,7 +36,7 @@
     ])
   );
 
-  // Tabelweergave: basis als gojūon-raster (・ = lege cel), de rest in volgorde.
+  // Table layout: basic as a gojūon grid (・ = empty cell), the rest in order.
   const TABLE = {
     basic: { label: "Basic", cols: 5, layout: [..."あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもや・ゆ・よらりるれろわ・・・をん"] },
     dakuten: { label: "Dakuten", cols: 5, layout: KANA.dakuten.map((k) => k.kana) },
@@ -44,7 +44,7 @@
   };
   const ROMAJI = new Map(Object.values(KANA).flat().map((k) => [k.kana, k.romaji[0]]));
   const NEXT_MARK = { on: "focus", focus: "off", off: "on" };
-  let marks = {}; // hiragana → "focus" | "off"; ontbrekend = aan
+  let marks = {}; // hiragana → "focus" | "off"; missing = on
   const markOf = (kana) => marks[kana] || "on";
 
   const toKatakana =(s) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
@@ -60,7 +60,7 @@
     editChars: $("edit-chars"), marksSummary: $("marks-summary"), chars: $("chars"), charTables: $("char-tables"),
   };
 
-  // --- Opties ---
+  // --- Options ---
 
   function readOptions() {
     return {
@@ -105,7 +105,10 @@
         for (const c of el.options.querySelectorAll("[name=group]")) c.checked = saved.groups.includes(c.value);
       }
       if (Array.isArray(saved.fonts)) {
-        for (const c of el.options.querySelectorAll("[name=font]")) c.checked = saved.fonts.includes(c.value);
+        // Map old (Dutch) names from previously saved choices.
+        const RENAMED = { kyokasho: "textbook", maru: "rounded", kalligrafie: "calligraphy", handschrift: "handwriting" };
+        const fonts = saved.fonts.map((f) => RENAMED[f] || f);
+        for (const c of el.options.querySelectorAll("[name=font]")) c.checked = fonts.includes(c.value);
       }
       if (saved.marks && typeof saved.marks === "object") {
         marks = Object.fromEntries(
@@ -119,7 +122,7 @@
     onOptionsChange();
   }
 
-  // --- Tekentabel ---
+  // --- Character table ---
 
   function renderChars() {
     const { script, groups } = readOptions();
@@ -137,7 +140,7 @@
         const row = layout.slice(r, r + cols);
         const kanas = row.filter((k) => k !== "・");
 
-        // Rij-knop met de klank (K, S, SH…); niet bij een rij van één teken (ん).
+        // Row button labelled with the sound (K, S, SH…); not for a single-character row (ん).
         if (kanas.length > 1) {
           const rowBtn = document.createElement("button");
           rowBtn.type = "button";
@@ -159,7 +162,7 @@
           cell.dataset.mark = markOf(k);
           const glyph = document.createElement("span");
           glyph.lang = "ja";
-          glyph.dataset.font = "kyokasho";
+          glyph.dataset.font = "textbook";
           glyph.textContent = label(k);
           const romaji = document.createElement("small");
           romaji.textContent = ROMAJI.get(k);
@@ -186,7 +189,7 @@
     else marks[kana] = mark;
   }
 
-  // Gezamenlijke stand van een rij: die van de tekens als ze gelijk zijn, anders "mixed".
+  // Combined state of a row: the characters' state if they all match, otherwise "mixed".
   function rowMark(kanas) {
     const states = new Set(kanas.map(markOf));
     return states.size === 1 ? [...states][0] : "mixed";
@@ -210,9 +213,9 @@
     return a;
   }
 
-  // Na het schudden: geen twee dezelfde tekens direct achter elkaar (kan door "vaker"-kopieën).
-  // Legt de (al geschudde) kaarten één voor één neer; het vaakst resterende teken gaat voor
-  // als het anders niet meer past.
+  // After shuffling: never the same character twice in a row (possible with focus copies).
+  // Lays the (already shuffled) cards down one by one; the most frequent remaining character
+  // goes first when it would otherwise no longer fit.
   function spreadDuplicates(a, prev) {
     const rest = a.splice(0);
     while (rest.length) {
@@ -223,7 +226,7 @@
       let i = top * 2 > rest.length && topKana !== last
         ? rest.findIndex((c) => c.kana === topKana)
         : rest.findIndex((c) => c.kana !== last);
-      if (i < 0) i = 0; // kan niet anders (bijv. maar één teken over)
+      if (i < 0) i = 0; // no other option (e.g. only one character left)
       a.push(rest.splice(i, 1)[0]);
     }
     return a;
@@ -243,7 +246,7 @@
     return shuffleDeck(deck);
   }
 
-  // --- Spel ---
+  // --- Game ---
 
   let deck = [];
   let pos = 0;
@@ -259,7 +262,7 @@
 
   function drawCard() {
     if (pos >= deck.length) {
-      shuffleDeck(deck, card?.kana); // ook over de grens heen geen herhaling
+      shuffleDeck(deck, card?.kana); // no repeat across the deck boundary either
       pos = 0;
     }
     return deck[pos++];
@@ -324,7 +327,7 @@
     deck = buildDeck(opts);
     fonts = opts.fonts.filter((f) => f in FONTS);
     if (!deck.length || !fonts.length) return;
-    // Gekozen fonts alvast laden (meestal al binnen via de voorbeeldjes op het optiescherm).
+    // Preload the chosen fonts (usually already loaded by the previews on the options screen).
     for (const f of fonts) {
       if (FONTS[f].family) document.fonts.load(`1em "${FONTS[f].family}"`, "あ").catch(() => {});
     }
@@ -336,7 +339,7 @@
 
     el.setup.hidden = true;
     el.game.hidden = false;
-    el.input.focus(); // binnen de user gesture, zodat iOS het toetsenbord opent
+    el.input.focus(); // within the user gesture, so iOS opens the keyboard
     next();
   }
 
@@ -362,7 +365,7 @@
   });
 
   el.chars.addEventListener("click", (e) => {
-    if (e.target === el.chars) { el.chars.close(); return; } // tik op de achtergrond
+    if (e.target === el.chars) { el.chars.close(); return; } // tap on the backdrop
     const cell = e.target.closest(".cell");
     const row = e.target.closest(".row-btn");
     const all = e.target.closest("[data-all]");
@@ -400,7 +403,7 @@
     if (!locked) resolve(card.romaji.includes(normalize(el.input.value)));
   });
 
-  // Tik ergens in het spel = toetsenbord terug.
+  // Tapping anywhere in the game brings the keyboard back.
   el.game.addEventListener("click", (e) => {
     if (!e.target.closest("button")) el.input.focus();
   });
@@ -409,8 +412,8 @@
     if (e.key === "Escape" && !el.game.hidden) stop();
   });
 
-  // Thema: standaard licht; donker wordt onthouden. Het inline script in <head> zet het al
-  // vóór het tekenen, zodat er geen flits is.
+  // Theme: light by default; dark is remembered. The inline script in <head> applies it
+  // before the first paint, so there is no flash.
   const THEME_KEY = "kana:theme";
   const themeColor = $("theme-color");
   const syncThemeColor = () => {
@@ -425,7 +428,7 @@
   });
   syncThemeColor();
 
-  // iOS Safari verkleint de pagina niet als het toetsenbord opent; volg daarom het zichtbare deel.
+  // iOS Safari does not shrink the page when the keyboard opens, so follow the visible area.
   const vv = window.visualViewport;
   if (vv) {
     const fit = () => {
