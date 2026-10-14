@@ -2,6 +2,14 @@
 
 A small flashcard app for practising Japanese hiragana and katakana. It runs entirely in the browser, with no backend, framework or build step, and starts instantly on a phone.
 
+Made to my exact personal preferences using AI.
+
+<p align="center">
+  <img src="screenshots/setup.png" alt="Options screen: script, kana groups and typefaces" width="280">
+  &nbsp;&nbsp;
+  <img src="screenshots/game.png" alt="Practice card showing わ in a practice square, with the romaji being typed" width="280">
+</p>
+
 ## What it does
 
 - Shows a kana in a large practice square. You type the romaji.
@@ -18,15 +26,6 @@ A small flashcard app for practising Japanese hiragana and katakana. It runs ent
 - **Light/dark mode**: light is the default.
 
 Your choices are saved in the browser's local storage.
-
-## Files
-
-```
-index.html   page markup
-style.css    styling
-app.js       all logic
-fonts/       kana-only font subsets (~185 KB total, SIL Open Font License)
-```
 
 ## Running and deploying
 
