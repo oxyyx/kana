@@ -13,7 +13,7 @@ Made to my exact personal preferences using AI.
 ## What it does
 
 - Shows a kana in a large practice square. You type the romaji.
-- A correct answer turns the card green right away, without pressing Enter. A wrong answer (Enter) or no answer within 5 seconds turns it orange and shows the right romaji.
+- A correct answer turns the card green right away, without pressing Enter. A wrong answer (Enter) or no answer within the time limit turns it orange and shows the right romaji.
 - Cards come in random order, shuffled differently every time you press Start. There is no scoring pressure: you just keep practising, with a simple score and streak counter.
 - Common romaji variants are accepted, such as `si`/`shi`, `tu`/`tsu`, `hu`/`fu` and `nn` for ん.
 
@@ -23,6 +23,7 @@ Made to my exact personal preferences using AI.
 - **Kana**: basic (46), dakuten (25) and combinations such as きゃ (33).
 - **Choose characters**: a gojūon table where each character cycles through *on → focus → off*. Focus characters appear three times as often. Whole rows (K, S, T…) can be toggled at once.
 - **Typefaces**: each card is shown in a random typeface from your selection: Textbook (the default, similar to the Genki textbook), System, Gothic, Mincho, Rounded, Calligraphy, Handwriting and Pixel. This helps you recognise kana in different styles.
+- **Time per card**: 3, 5 (default), 8, 10 or 15 seconds, or no limit.
 - **Light/dark mode**: light is the default.
 
 Your choices are saved in the browser's local storage.

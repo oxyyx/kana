@@ -1,7 +1,6 @@
 "use strict";
 
 (() => {
-  const TIME_LIMIT_MS = 5000;
   const FEEDBACK_OK_MS = 600;
   const FEEDBACK_BAD_MS = 1200;
   const FOCUS_WEIGHT = 3; // focus characters appear this many times in the deck
@@ -14,16 +13,16 @@
     combo: "きゃ kya,きゅ kyu,きょ kyo,しゃ sha sya,しゅ shu syu,しょ sho syo,ちゃ cha tya cya,ちゅ chu tyu cyu,ちょ cho tyo cyo,にゃ nya,にゅ nyu,にょ nyo,ひゃ hya,ひゅ hyu,ひょ hyo,みゃ mya,みゅ myu,みょ myo,りゃ rya,りゅ ryu,りょ ryo,ぎゃ gya,ぎゅ gyu,ぎょ gyo,じゃ ja zya jya,じゅ ju zyu jyu,じょ jo zyo jyo,びゃ bya,びゅ byu,びょ byo,ぴゃ pya,ぴゅ pyu,ぴょ pyo",
   };
 
-  // Typefaces: kana-only subsets in fonts/, see style.css. One is picked per card.
+  // Typefaces: kana-only subsets in fonts/, families in style.css ([data-font]). One is picked per card.
   const FONTS = {
-    textbook: { label: "Textbook", family: "Kana Textbook" },
-    system: { label: "System", family: "" },
-    gothic: { label: "Gothic", family: "Kana Gothic" },
-    mincho: { label: "Mincho", family: "Kana Mincho" },
-    rounded: { label: "Rounded", family: "Kana Rounded" },
-    calligraphy: { label: "Calligraphy", family: "Kana Calligraphy" },
-    handwriting: { label: "Handwriting", family: "Kana Handwriting" },
-    pixel: { label: "Pixel", family: "Kana Pixel" },
+    textbook: "Textbook",
+    system: "System",
+    gothic: "Gothic",
+    mincho: "Mincho",
+    rounded: "Rounded",
+    calligraphy: "Calligraphy",
+    handwriting: "Handwriting",
+    pixel: "Pixel",
   };
 
   const KANA = Object.fromEntries(
@@ -47,7 +46,7 @@
   let marks = {}; // hiragana → "focus" | "off"; missing = on
   const markOf = (kana) => marks[kana] || "on";
 
-  const toKatakana =(s) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
+  const toKatakana = (s) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
   const normalize = (s) => s.trim().toLowerCase();
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -67,6 +66,7 @@
       script: el.options.elements.script.value,
       groups: [...el.options.querySelectorAll("[name=group]:checked")].map((i) => i.value),
       fonts: [...el.options.querySelectorAll("[name=font]:checked")].map((i) => i.value),
+      time: Number(el.options.elements.time.value), // seconds per card; 0 = no limit
       marks,
     };
   }
@@ -105,11 +105,10 @@
         for (const c of el.options.querySelectorAll("[name=group]")) c.checked = saved.groups.includes(c.value);
       }
       if (Array.isArray(saved.fonts)) {
-        // Map old (Dutch) names from previously saved choices.
-        const RENAMED = { kyokasho: "textbook", maru: "rounded", kalligrafie: "calligraphy", handschrift: "handwriting" };
-        const fonts = saved.fonts.map((f) => RENAMED[f] || f);
-        for (const c of el.options.querySelectorAll("[name=font]")) c.checked = fonts.includes(c.value);
+        for (const c of el.options.querySelectorAll("[name=font]")) c.checked = saved.fonts.includes(c.value);
       }
+      const time = el.options.elements.time;
+      if ([...time.options].some((o) => o.value === String(saved.time))) time.value = saved.time;
       if (saved.marks && typeof saved.marks === "object") {
         marks = Object.fromEntries(
           Object.entries(saved.marks).filter(([k, m]) => ROMAJI.has(k) && (m === "focus" || m === "off"))
@@ -218,16 +217,20 @@
   // goes first when it would otherwise no longer fit.
   function spreadDuplicates(a, prev) {
     const rest = a.splice(0);
+    const counts = new Map(); // remaining copies per character
+    for (const c of rest) counts.set(c.kana, (counts.get(c.kana) || 0) + 1);
     while (rest.length) {
       const last = a.length ? a[a.length - 1].kana : prev;
-      const counts = new Map();
-      for (const c of rest) counts.set(c.kana, (counts.get(c.kana) || 0) + 1);
       const [topKana, top] = [...counts].reduce((m, e) => (e[1] > m[1] ? e : m));
       let i = top * 2 > rest.length && topKana !== last
         ? rest.findIndex((c) => c.kana === topKana)
         : rest.findIndex((c) => c.kana !== last);
       if (i < 0) i = 0; // no other option (e.g. only one character left)
-      a.push(rest.splice(i, 1)[0]);
+      const [picked] = rest.splice(i, 1);
+      a.push(picked);
+      const left = counts.get(picked.kana) - 1;
+      if (left) counts.set(picked.kana, left);
+      else counts.delete(picked.kana);
     }
     return a;
   }
@@ -254,6 +257,7 @@
   let fonts = [];
   let font = null;
   let locked = true;
+  let timeLimit = 0; // ms per card; 0 = no limit
   let timerAnim = null;
   let feedbackTimer = 0;
   let score = 0;
@@ -287,7 +291,7 @@
     el.kana.textContent = card.kana;
     el.kana.dataset.len = card.kana.length;
     el.kana.dataset.font = font;
-    el.fontLabel.textContent = fonts.length > 1 ? FONTS[font].label : "";
+    el.fontLabel.textContent = fonts.length > 1 ? FONTS[font] : "";
     el.answer.textContent = "";
     el.input.value = "";
     locked = false;
@@ -300,17 +304,22 @@
     }
 
     timerAnim?.cancel();
-    timerAnim = el.timer.animate(
-      [{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }],
-      { duration: TIME_LIMIT_MS, easing: "linear", fill: "forwards" }
-    );
-    timerAnim.onfinish = () => resolve(false);
+    timerAnim = null;
+    if (timeLimit) {
+      timerAnim = el.timer.animate(
+        [{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }],
+        { duration: timeLimit, easing: "linear", fill: "forwards" }
+      );
+      timerAnim.onfinish = () => answer(false);
+    }
   }
 
-  function resolve(ok) {
+  const isCorrect = () => card.romaji.includes(normalize(el.input.value));
+
+  function answer(ok) {
     if (locked) return;
     locked = true;
-    timerAnim.pause();
+    timerAnim?.pause();
 
     total++;
     if (ok) { score++; streak++; } else { streak = 0; }
@@ -326,11 +335,9 @@
     const opts = readOptions();
     deck = buildDeck(opts);
     fonts = opts.fonts.filter((f) => f in FONTS);
-    if (!deck.length || !fonts.length) return;
-    // Preload the chosen fonts (usually already loaded by the previews on the options screen).
-    for (const f of fonts) {
-      if (FONTS[f].family) document.fonts.load(`1em "${FONTS[f].family}"`, "あ").catch(() => {});
-    }
+    timeLimit = opts.time * 1000;
+    el.timer.hidden = !timeLimit;
+    if (!deck.length || !fonts.length) return; // fonts are already loading via the previews on the options screen
     pos = 0;
     card = null;
     font = null;
@@ -395,12 +402,12 @@
   });
 
   el.input.addEventListener("input", () => {
-    if (!locked && card.romaji.includes(normalize(el.input.value))) resolve(true);
+    if (!locked && isCorrect()) answer(true);
   });
 
   el.form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (!locked) resolve(card.romaji.includes(normalize(el.input.value)));
+    if (!locked) answer(isCorrect());
   });
 
   // Tapping anywhere in the game brings the keyboard back.
@@ -417,7 +424,7 @@
   const THEME_KEY = "kana:theme";
   const themeColor = $("theme-color");
   const syncThemeColor = () => {
-    themeColor.content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+    themeColor.content = getComputedStyle(document.body).backgroundColor; // resolved, unlike the light-dark() token
   };
   $("theme").addEventListener("click", () => {
     const dark = document.documentElement.dataset.theme !== "dark";
